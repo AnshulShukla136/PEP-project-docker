@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Docker + Express App</title>
+    <title>Calculator</title>
     <style>
         * {
             box-sizing: border-box;
@@ -15,94 +15,238 @@
         body {
             font-family: 'Segoe UI', sans-serif;
             background: #0f172a;
-            color: #f1f5f9;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
         }
 
-        .card {
+        .calculator {
             background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 16px;
-            padding: 48px;
-            text-align: center;
-            max-width: 480px;
-            width: 90%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+            width: 320px;
         }
 
-        .logo {
-            font-size: 48px;
-            margin-bottom: 16px;
+        .display {
+            background: #0f172a;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: right;
+            margin-bottom: 20px;
         }
 
-        h1 {
-            font-size: 1.8rem;
+        .display .expression {
+            color: #475569;
+            font-size: 0.9rem;
+            min-height: 20px;
             margin-bottom: 8px;
-            color: #38bdf8;
         }
 
-        p {
-            color: #94a3b8;
-            margin-bottom: 32px;
-            line-height: 1.6;
+        .display .result {
+            color: #f1f5f9;
+            font-size: 2.2rem;
+            font-weight: 300;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
         }
 
         button {
-            background: #38bdf8;
-            color: #0f172a;
+            padding: 18px;
             border: none;
-            padding: 12px 28px;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 500;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.15s;
+            active: scale(0.95);
         }
 
-        button:hover {
+        button:active {
+            transform: scale(0.93);
+        }
+
+        .btn-number {
+            background: #334155;
+            color: #f1f5f9;
+        }
+
+        .btn-number:hover {
+            background: #475569;
+        }
+
+        .btn-operator {
+            background: #0369a1;
+            color: #fff;
+        }
+
+        .btn-operator:hover {
+            background: #0284c7;
+        }
+
+        .btn-equals {
+            background: #38bdf8;
+            color: #0f172a;
+            font-weight: 700;
+        }
+
+        .btn-equals:hover {
             background: #7dd3fc;
         }
 
-        #response {
-            margin-top: 24px;
-            padding: 16px;
-            background: #0f172a;
-            border-radius: 8px;
-            color: #4ade80;
-            font-family: monospace;
-            font-size: 0.95rem;
-            min-height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .btn-clear {
+            background: #dc2626;
+            color: #fff;
+        }
+
+        .btn-clear:hover {
+            background: #ef4444;
+        }
+
+        .btn-special {
+            background: #1e3a5f;
+            color: #38bdf8;
+        }
+
+        .btn-special:hover {
+            background: #1e4976;
+        }
+
+        .span-two {
+            grid-column: span 2;
         }
     </style>
 </head>
 
 <body>
-    <div class="card">
-        <div class="logo">🐳</div>
-        <h1>Docker + Express</h1>
-        <p>A simple containerized web app. Click the button to ping the API.</p>
-        <button onclick="pingAPI()">Ping API</button>
-        <div id="response">Response will appear here...</div>
+    <div class="calculator">
+        <div class="display">
+            <div class="expression" id="expression"></div>
+            <div class="result" id="result">0</div>
+        </div>
+        <div class="buttons">
+            <button class="btn-clear" onclick="clearAll()">AC</button>
+            <button class="btn-special" onclick="toggleSign()">+/-</button>
+            <button class="btn-special" onclick="percentage()">%</button>
+            <button class="btn-operator" onclick="setOperator('/')">÷</button>
+
+            <button class="btn-number" onclick="appendNumber('7')">7</button>
+            <button class="btn-number" onclick="appendNumber('8')">8</button>
+            <button class="btn-number" onclick="appendNumber('9')">9</button>
+            <button class="btn-operator" onclick="setOperator('*')">×</button>
+
+            <button class="btn-number" onclick="appendNumber('4')">4</button>
+            <button class="btn-number" onclick="appendNumber('5')">5</button>
+            <button class="btn-number" onclick="appendNumber('6')">6</button>
+            <button class="btn-operator" onclick="setOperator('-')">−</button>
+
+            <button class="btn-number" onclick="appendNumber('1')">1</button>
+            <button class="btn-number" onclick="appendNumber('2')">2</button>
+            <button class="btn-number" onclick="appendNumber('3')">3</button>
+            <button class="btn-operator" onclick="setOperator('+')">+</button>
+
+            <button class="btn-number span-two" onclick="appendNumber('0')">0</button>
+            <button class="btn-number" onclick="appendDecimal()">.</button>
+            <button class="btn-equals" onclick="calculate()">=</button>
+        </div>
     </div>
 
     <script>
-        async function pingAPI() {
-            const el = document.getElementById('response');
-            el.textContent = 'Loading...';
-            try {
-                const res = await fetch('/api/hello');
-                const data = await res.json();
-                el.textContent = '✅ ' + data.message;
-            } catch (err) {
-                el.textContent = '❌ Error: ' + err.message;
-            }
+        let current = '0';
+        let previous = '';
+        let operator = null;
+        let shouldReset = false;
+
+        const resultEl = document.getElementById('result');
+        const expressionEl = document.getElementById('expression');
+
+        function updateDisplay() {
+            resultEl.textContent = current;
         }
+
+        function appendNumber(num) {
+            if (current === '0' || shouldReset) {
+                current = num;
+                shouldReset = false;
+            } else {
+                if (current.length >= 10) return;
+                current += num;
+            }
+            updateDisplay();
+        }
+
+        function appendDecimal() {
+            if (shouldReset) { current = '0'; shouldReset = false; }
+            if (!current.includes('.')) current += '.';
+            updateDisplay();
+        }
+
+        function setOperator(op) {
+            if (operator && !shouldReset) calculate(true);
+            previous = current;
+            operator = op;
+            shouldReset = true;
+            const symbols = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+            expressionEl.textContent = `${previous} ${symbols[op]}`;
+        }
+
+        function calculate(chaining = false) {
+            if (!operator || !previous) return;
+            const a = parseFloat(previous);
+            const b = parseFloat(current);
+            let result;
+            switch (operator) {
+                case '+': result = a + b; break;
+                case '-': result = a - b; break;
+                case '*': result = a * b; break;
+                case '/': result = b === 0 ? 'Error' : a / b; break;
+            }
+            const symbols = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+            if (!chaining) expressionEl.textContent = `${previous} ${symbols[operator]} ${current} =`;
+            current = result === 'Error' ? 'Error' : parseFloat(result.toFixed(8)).toString();
+            operator = null;
+            shouldReset = true;
+            updateDisplay();
+        }
+
+        function clearAll() {
+            current = '0'; previous = ''; operator = null; shouldReset = false;
+            expressionEl.textContent = '';
+            updateDisplay();
+        }
+
+        function toggleSign() {
+            current = (parseFloat(current) * -1).toString();
+            updateDisplay();
+        }
+
+        function percentage() {
+            current = (parseFloat(current) / 100).toString();
+            updateDisplay();
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key >= '0' && e.key <= '9') appendNumber(e.key);
+            else if (e.key === '.') appendDecimal();
+            else if (e.key === '+') setOperator('+');
+            else if (e.key === '-') setOperator('-');
+            else if (e.key === '*') setOperator('*');
+            else if (e.key === '/') { e.preventDefault(); setOperator('/'); }
+            else if (e.key === 'Enter' || e.key === '=') calculate();
+            else if (e.key === 'Backspace') {
+                current = current.length > 1 ? current.slice(0, -1) : '0';
+                updateDisplay();
+            }
+            else if (e.key === 'Escape') clearAll();
+        });
     </script>
 </body>
 
